@@ -1,0 +1,6 @@
+{
+  "name": "Rqeeb Pro Apps - متجر تطبيقات رقيب برو",
+  "description": "متجر تطبيقات رقيب برو - كل ما تحتاجه من تطبيقات أندرويد في مكان واحد، آمن وموثوق، تحميل سريع وتطبيقات أصلية.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
