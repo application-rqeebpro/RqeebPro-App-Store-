@@ -79,43 +79,33 @@ export const ContactFooter: React.FC<ContactFooterProps> = ({ lang }) => {
           )}
         </div>
 
-        {/* 2. Social Media Channels (Center) */}
+        {/* 2. Social Media Channels & Website Link (Center) */}
         <div className="flex flex-col items-center gap-2">
-          <span className="text-xs font-bold text-slate-600 font-['Cairo']">
-            {t.followUs}
-          </span>
-          <div className="flex items-center gap-2.5">
-            {/* Telegram */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-600 font-['Cairo']">
+              {t.followUs}
+            </span>
             <a
-              href="https://t.me/rqeebpro"
+              href="https://rqeebpro.online"
               target="_blank"
               rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-[#0088cc] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
-              title="Telegram"
+              className="px-2.5 py-0.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm transition-all"
             >
-              <Send className="w-4 h-4 -translate-x-0.5 translate-y-0.5" />
+              <ExternalLink className="w-3 h-3" />
+              <span>rqeebpro.online</span>
             </a>
+          </div>
 
+          <div className="flex items-center gap-2 sm:gap-2.5">
             {/* Facebook */}
             <a
-              href="https://facebook.com"
+              href="https://facebook.com/rqeebpro"
               target="_blank"
               rel="noreferrer"
               className="w-9 h-9 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold text-sm hover:scale-110 transition-transform shadow-sm font-['Tajawal']"
-              title="Facebook"
+              title="Facebook @rqeebpro"
             >
               f
-            </a>
-
-            {/* X / Twitter */}
-            <a
-              href="https://x.com"
-              target="_blank"
-              rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center font-black text-xs hover:scale-110 transition-transform shadow-sm"
-              title="X (Twitter)"
-            >
-              𝕏
             </a>
 
             {/* Instagram */}
@@ -124,7 +114,7 @@ export const ContactFooter: React.FC<ContactFooterProps> = ({ lang }) => {
               target="_blank"
               rel="noreferrer"
               className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
-              title="Instagram"
+              title="Instagram @rqeebpro"
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-white stroke-2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
@@ -133,22 +123,54 @@ export const ContactFooter: React.FC<ContactFooterProps> = ({ lang }) => {
               </svg>
             </a>
 
-            {/* YouTube */}
+            {/* TikTok */}
             <a
-              href="https://youtube.com"
+              href="https://tiktok.com/@rqeebpro"
               target="_blank"
               rel="noreferrer"
-              className="w-9 h-9 rounded-full bg-[#FF0000] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
-              title="YouTube"
+              className="w-9 h-9 rounded-full bg-[#000000] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
+              title="TikTok @rqeebpro"
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
-                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 1 1-5.2-1.74 2.89 2.89 0 0 1 2.31-1.37V9.11a6.32 6.32 0 0 0-5.41 6.25 6.34 6.34 0 0 0 10.86 4.51 6.3 6.3 0 0 0 1.77-4.48V8.81a8.16 8.16 0 0 0 4.89 1.62V6.98a4.85 4.85 0 0 1-2-.29z"/>
               </svg>
             </a>
+
+            {/* X / Twitter */}
+            <a
+              href="https://x.com/rqeebpro"
+              target="_blank"
+              rel="noreferrer"
+              className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center font-black text-xs hover:scale-110 transition-transform shadow-sm"
+              title="X (Twitter) @rqeebpro"
+            >
+              𝕏
+            </a>
+
+            {/* Telegram */}
+            <a
+              href="https://t.me/rqeebpro"
+              target="_blank"
+              rel="noreferrer"
+              className="w-9 h-9 rounded-full bg-[#0088cc] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
+              title="Telegram @rqeebpro"
+            >
+              <Send className="w-4 h-4 -translate-x-0.5 translate-y-0.5" />
+            </a>
           </div>
-          <span className="text-xs font-semibold text-slate-800 font-mono tracking-wider">
-            {t.socialHandle}
-          </span>
+
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 font-mono tracking-wider">
+            <span>{t.socialHandle}</span>
+            <span className="text-slate-400">•</span>
+            <a
+              href="https://rqeebpro.online"
+              target="_blank"
+              rel="noreferrer"
+              className="text-blue-700 hover:underline font-bold font-sans"
+            >
+              rqeebpro.online
+            </a>
+          </div>
         </div>
 
         {/* 3. Slogan (Right side as in screenshot) */}
@@ -157,7 +179,7 @@ export const ContactFooter: React.FC<ContactFooterProps> = ({ lang }) => {
             {t.slogan}
           </p>
           <p className="text-[11px] text-slate-400 mt-0.5">
-            جميع الحقوق محفوظة © رقيب برو {new Date().getFullYear()}
+            شركة رقيب للبرمجة والتسويق © {new Date().getFullYear()}
           </p>
         </div>
       </div>

@@ -12,7 +12,7 @@ export const SideDisplayCard: React.FC<SideDisplayCardProps> = ({
   onSelectApp,
 }) => {
   return (
-    <div className="relative w-64 xl:w-72 hidden md:flex flex-col gap-3 select-none transform rotate-y-[-12deg] rotate-x-[4deg] perspective-1000 transition-all duration-500 hover:rotate-y-[-6deg]">
+    <div className="w-full md:w-64 xl:w-72 grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-col gap-2.5 sm:gap-3 select-none transition-all duration-500 md:transform md:rotate-y-[-12deg] md:rotate-x-[4deg] md:perspective-1000 md:hover:rotate-y-[-6deg]">
       {/* 1. Racing Game Banner (Top as in image) */}
       <div
         onClick={() => onSelectApp('racing-game')}

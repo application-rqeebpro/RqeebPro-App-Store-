@@ -25,11 +25,26 @@ export const AppIconRenderer: React.FC<AppIconProps> = ({
   className = '',
 }) => {
   const sizeClasses = {
-    sm: 'w-10 h-10 rounded-xl text-base',
-    md: 'w-14 h-14 rounded-2xl text-xl',
-    lg: 'w-20 h-20 rounded-3xl text-3xl',
-    xl: 'w-24 h-24 rounded-3xl text-4xl',
+    sm: 'w-10 h-10 rounded-xl text-base shrink-0',
+    md: 'w-14 h-14 rounded-2xl text-xl shrink-0',
+    lg: 'w-20 h-20 rounded-3xl text-3xl shrink-0',
+    xl: 'w-24 h-24 rounded-3xl text-4xl shrink-0',
   };
+
+  // Render custom image if provided
+  if (app.iconUrl) {
+    return (
+      <div
+        className={`${sizeClasses[size]} relative flex items-center justify-center bg-slate-900 shadow-md border border-cyan-400/40 overflow-hidden shrink-0 ${className}`}
+      >
+        <img
+          src={app.iconUrl}
+          alt={app.nameAr}
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
 
   // Specific high fidelity renderings matching the image
   if (app.iconType === 'rqeeb') {

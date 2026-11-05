@@ -20,6 +20,9 @@ export interface StoreSettings {
   socialInstagram: string;
   announcementText: string;
   announcementActive: boolean;
+  maintenanceModeActive: boolean;
+  maintenanceTitle: string;
+  maintenanceMessage: string;
 }
 
 export interface OwnerCredentials {
@@ -38,6 +41,35 @@ export interface UploadedFileItem {
   uploadedAt: string;
 }
 
+export interface CartItem {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  categoryAr: string;
+  priceYer: number;
+  priceUsd: number;
+  quantity: number;
+  imageOrIcon?: string;
+  itemType: 'product' | 'app';
+}
+
+export interface StoreOrder {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  city: string;
+  addressDetails: string;
+  paymentMethodId: 'jeeb' | 'jawali' | 'floosak' | 'onecash' | 'kuraimi';
+  paymentMethodName: string;
+  accountNumber: string;
+  transactionRef: string; // رقم العملية / الإشعار
+  totalPriceYer: number;
+  totalPriceUsd: number;
+  items: CartItem[];
+  createdAt: string;
+  status: 'pending' | 'verified' | 'shipping' | 'completed' | 'cancelled';
+}
+
 interface StoreContextType {
   apps: AndroidApp[];
   requests: CustomAppRequest[];
@@ -46,6 +78,8 @@ interface StoreContextType {
   uploadedFiles: UploadedFileItem[];
   isOwnerLoggedIn: boolean;
   downloadedApps: AndroidApp[];
+  cartItems: CartItem[];
+  orders: StoreOrder[];
   loginOwner: (creds: OwnerCredentials) => boolean;
   logoutOwner: () => void;
   updateCredentials: (newCreds: Partial<OwnerCredentials>) => void;
@@ -60,6 +94,13 @@ interface StoreContextType {
   deleteUploadedFile: (id: string) => void;
   addToDownloads: (app: AndroidApp) => void;
   removeFromDownloads: (id: string) => void;
+  addToCart: (item: { id: string; nameAr: string; nameEn: string; categoryAr: string; priceYer: number; priceUsd: number; imageOrIcon?: string; itemType: 'product' | 'app' }) => void;
+  updateCartQuantity: (id: string, delta: number) => void;
+  removeFromCart: (id: string) => void;
+  clearCart: () => void;
+  placeOrder: (orderData: Omit<StoreOrder, 'id' | 'createdAt' | 'status'>) => StoreOrder;
+  updateOrderStatus: (orderId: string, status: StoreOrder['status']) => void;
+  deleteOrder: (orderId: string) => void;
   resetAllData: () => void;
 }
 
@@ -71,6 +112,9 @@ const DEFAULT_SETTINGS: StoreSettings = {
   socialInstagram: 'https://instagram.com/rqeebpro',
   announcementText: 'مرحباً بكم في متجر تطبيقات رقيب برو الرسمي - أحدث إصدارات الأندرويد متوفرة الآن للتحميل المباشر!',
   announcementActive: true,
+  maintenanceModeActive: false,
+  maintenanceTitle: 'المتجر تحت الصيانة والتحديث الدوري',
+  maintenanceMessage: 'نقوم حالياً بإجراء تحديثات وتحسينات هامة على قواعد البيانات والسيرفرات لتوفير تجربة أسرع وأكثر أماناً. سنعود للعمل قريباً جداً!',
 };
 
 const DEFAULT_CREDENTIALS: OwnerCredentials = {
@@ -110,7 +154,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [apps, setApps] = useState<AndroidApp[]>(() => {
     try {
       const saved = localStorage.getItem('rqeeb_apps');
-      return saved ? JSON.parse(saved) : APPS_DATA;
+      if (!saved) return APPS_DATA;
+      const parsed: AndroidApp[] = JSON.parse(saved);
+
+      // Merge APPS_DATA updates for core default apps
+      return APPS_DATA.map((defaultApp) => {
+        const found = parsed.find((p) => p.id === defaultApp.id);
+        return found ? { ...found, category: defaultApp.category, categoryAr: defaultApp.categoryAr, categoryEn: defaultApp.categoryEn, iconUrl: defaultApp.iconUrl, downloadUrl: defaultApp.downloadUrl } : defaultApp;
+      }).concat(parsed.filter((p) => !APPS_DATA.some((d) => d.id === p.id)));
     } catch {
       return APPS_DATA;
     }
@@ -188,7 +239,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return sessionStorage.getItem('rqeeb_owner_active') === 'true';
   });
 
-  // Sync to localStorage
   useEffect(() => {
     localStorage.setItem('rqeeb_apps', JSON.stringify(apps));
   }, [apps]);
@@ -212,6 +262,34 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     localStorage.setItem('rqeeb_downloads', JSON.stringify(downloadedApps));
   }, [downloadedApps]);
+
+  // Real-time synchronization listener across windows/tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      try {
+        if (e.key === 'rqeeb_apps' && e.newValue) {
+          setApps(JSON.parse(e.newValue));
+        }
+        if (e.key === 'rqeeb_settings' && e.newValue) {
+          setSettings(JSON.parse(e.newValue));
+        }
+        if (e.key === 'rqeeb_requests' && e.newValue) {
+          setRequests(JSON.parse(e.newValue));
+        }
+        if (e.key === 'rqeeb_files' && e.newValue) {
+          setUploadedFiles(JSON.parse(e.newValue));
+        }
+        if (e.key === 'rqeeb_owner_creds' && e.newValue) {
+          setCredentials(JSON.parse(e.newValue));
+        }
+      } catch (err) {
+        console.error('Storage sync error:', err);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Login handler
   const loginOwner = (creds: OwnerCredentials): boolean => {
@@ -287,6 +365,137 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setUploadedFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
+  // Shopping Cart Items
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('rqeeb_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Store Sales Orders (Wallet Payments)
+  const [orders, setOrders] = useState<StoreOrder[]>(() => {
+    try {
+      const saved = localStorage.getItem('rqeeb_orders');
+      return saved ? JSON.parse(saved) : [
+        {
+          id: 'ord-101',
+          customerName: 'صالح سعيد الكندي',
+          customerPhone: '775123456',
+          city: 'صنعاء',
+          addressDetails: 'شارع حدة - بجوار سيتي سنتر',
+          paymentMethodId: 'jeeb',
+          paymentMethodName: 'محفظة جيب (Jeeb)',
+          accountNumber: '785502919',
+          transactionRef: 'JB-88294102',
+          totalPriceYer: 28000,
+          totalPriceUsd: 50,
+          items: [
+            {
+              id: 'prod-smartwatch-3',
+              nameAr: 'ساعة رقيب الذكية المقاومة للماء Pro',
+              nameEn: 'Rqeeb SmartWatch Pro',
+              categoryAr: 'هواتف وإلكترونيات',
+              priceYer: 28000,
+              priceUsd: 50,
+              quantity: 1,
+              itemType: 'product',
+            },
+          ],
+          createdAt: '2026-11-04 18:20',
+          status: 'verified',
+        },
+      ];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('rqeeb_cart', JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  useEffect(() => {
+    localStorage.setItem('rqeeb_orders', JSON.stringify(orders));
+  }, [orders]);
+
+  // Shopping Cart Handlers
+  const addToCart = (item: {
+    id: string;
+    nameAr: string;
+    nameEn: string;
+    categoryAr: string;
+    priceYer: number;
+    priceUsd: number;
+    imageOrIcon?: string;
+    itemType: 'product' | 'app';
+  }) => {
+    setCartItems((prev) => {
+      const existing = prev.find((c) => c.id === item.id);
+      if (existing) {
+        return prev.map((c) =>
+          c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c
+        );
+      }
+      return [...prev, { ...item, quantity: 1 }];
+    });
+  };
+
+  const updateCartQuantity = (id: string, delta: number) => {
+    setCartItems((prev) =>
+      prev
+        .map((c) => {
+          if (c.id === id) {
+            const newQty = c.quantity + delta;
+            return newQty > 0 ? { ...c, quantity: newQty } : null;
+          }
+          return c;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  };
+
+  const removeFromCart = (id: string) => {
+    setCartItems((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
+  // Place Order (Yemeni Wallet Checkout)
+  const placeOrder = (
+    orderData: Omit<StoreOrder, 'id' | 'createdAt' | 'status'>
+  ): StoreOrder => {
+    const newOrder: StoreOrder = {
+      ...orderData,
+      id: `ord-${Date.now().toString().slice(-6)}`,
+      createdAt: new Date().toLocaleString('ar-EG', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      }),
+      status: 'pending',
+    };
+    setOrders((prev) => [newOrder, ...prev]);
+    clearCart();
+    return newOrder;
+  };
+
+  const updateOrderStatus = (
+    orderId: string,
+    status: StoreOrder['status']
+  ) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status } : o))
+    );
+  };
+
+  const deleteOrder = (orderId: string) => {
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+  };
+
   // Downloads Queue
   const addToDownloads = (app: AndroidApp) => {
     if (!downloadedApps.some((a) => a.id === app.id)) {
@@ -317,6 +526,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         uploadedFiles,
         isOwnerLoggedIn,
         downloadedApps,
+        cartItems,
+        orders,
         loginOwner,
         logoutOwner,
         updateCredentials,
@@ -331,6 +542,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         deleteUploadedFile,
         addToDownloads,
         removeFromDownloads,
+        addToCart,
+        updateCartQuantity,
+        removeFromCart,
+        clearCart,
+        placeOrder,
+        updateOrderStatus,
+        deleteOrder,
         resetAllData,
       }}
     >

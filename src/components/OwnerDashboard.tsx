@@ -26,8 +26,12 @@ import {
   FolderOpen,
   FileCode,
   Sparkles,
+  Wrench,
+  Database,
+  ShoppingBag,
+  CreditCard,
 } from 'lucide-react';
-import { useStore, CustomAppRequest, UploadedFileItem } from '../context/StoreContext';
+import { useStore, CustomAppRequest, UploadedFileItem, StoreOrder } from '../context/StoreContext';
 import { AndroidApp } from '../data/appsData';
 import { AppIconRenderer } from './AppIconRenderer';
 import { RqeebLogo } from './RqeebLogo';
@@ -43,12 +47,15 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onExit }) => {
     settings,
     credentials,
     uploadedFiles,
+    orders,
     logoutOwner,
     addApp,
     updateApp,
     deleteApp,
     updateRequestStatus,
     deleteRequest,
+    updateOrderStatus,
+    deleteOrder,
     updateSettings,
     addUploadedFile,
     deleteUploadedFile,
@@ -56,7 +63,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onExit }) => {
     resetAllData,
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'apps' | 'requests' | 'broadcast' | 'files' | 'settings'>('apps');
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'apps' | 'requests' | 'broadcast' | 'files' | 'settings'>('orders');
 
   // App Form Modal (Add or Edit)
   const [isAppModalOpen, setIsAppModalOpen] = useState(false);
@@ -98,8 +105,28 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onExit }) => {
   // WhatsApp store number
   const [storeWhatsapp, setStoreWhatsapp] = useState(settings.whatsappNumber);
 
+  // Maintenance Mode State
+  const [maintActive, setMaintActive] = useState(settings.maintenanceModeActive || false);
+  const [maintTitle, setMaintTitle] = useState(settings.maintenanceTitle || 'المتجر تحت الصيانة والتحديث الدوري');
+  const [maintMsg, setMaintMsg] = useState(
+    settings.maintenanceMessage ||
+      'نقوم حالياً بإجراء تحديثات وتحسينات هامة على قواعد البيانات والسيرفرات لتوفير تجربة أسرع وأكثر أماناً. سنعود للعمل قريباً جداً!'
+  );
+  const [maintSuccess, setMaintSuccess] = useState(false);
+
   // Copy toast
   const [copiedText, setCopiedText] = useState<string | null>(null);
+
+  const handleSaveMaintenance = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateSettings({
+      maintenanceModeActive: maintActive,
+      maintenanceTitle: maintTitle,
+      maintenanceMessage: maintMsg,
+    });
+    setMaintSuccess(true);
+    setTimeout(() => setMaintSuccess(false), 3000);
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -330,6 +357,25 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onExit }) => {
           </button>
 
           <button
+            onClick={() => setActiveTab('orders')}
+            className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              activeTab === 'orders'
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <ShoppingBag className="w-4 h-4 text-emerald-400" />
+              <span>طلبات المبيعات والمحافظ ({orders.length})</span>
+            </div>
+            {orders.filter((o) => o.status === 'pending').length > 0 && (
+              <span className="bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
+                {orders.filter((o) => o.status === 'pending').length}
+              </span>
+            )}
+          </button>
+
+          <button
             onClick={() => setActiveTab('apps')}
             className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
               activeTab === 'apps'
@@ -509,6 +555,124 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onExit }) => {
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB: SALES ORDERS & ELECTRONIC WALLETS */}
+          {activeTab === 'orders' && (
+            <div className="space-y-4">
+              <div className="bg-[#0e1d45] p-4 rounded-2xl border border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-emerald-400" />
+                    <span>طلبات المبيعات والدفع الإلكتروني عبر المحافظ ({orders.length})</span>
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    متابعة التحويلات عبر: جيب، جوالي، فلوسك، ون كاش، الكريمي (785502919) وتأكيد إرسال الطلبات
+                  </p>
+                </div>
+              </div>
+
+              {orders.length === 0 ? (
+                <div className="text-center py-16 bg-[#0e1d45] rounded-3xl border border-slate-800 p-8">
+                  <ShoppingBag className="w-12 h-12 text-slate-500 mx-auto mb-2 opacity-50" />
+                  <p className="text-slate-400 text-sm">لا توجد طلبات شراء مسجلة حالياً</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {orders.map((ord) => (
+                    <div
+                      key={ord.id}
+                      className="p-4 rounded-2xl bg-[#0e1d45] border border-blue-500/20 space-y-3"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/10">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-amber-400 font-mono bg-amber-500/10 border border-amber-400/20 px-2.5 py-0.5 rounded-full">
+                              #{ord.id}
+                            </span>
+                            <h4 className="font-extrabold text-base text-white">{ord.customerName}</h4>
+                            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full font-bold">
+                              {ord.paymentMethodName}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400 mt-1">
+                            الهاتف: <span className="text-white font-mono">{ord.customerPhone}</span> · المدينة: <span className="text-white">{ord.city} ({ord.addressDetails})</span> · {ord.createdAt}
+                          </p>
+                        </div>
+
+                        {/* Status Select & Actions */}
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={ord.status}
+                            onChange={(e) => updateOrderStatus(ord.id, e.target.value as any)}
+                            className="bg-[#050e26] border border-slate-700 text-xs rounded-xl px-2.5 py-1.5 text-slate-100 focus:outline-none focus:border-emerald-400"
+                          >
+                            <option value="pending">🟡 قيد المراجعة</option>
+                            <option value="verified">🟢 تم التحقق والدفع</option>
+                            <option value="shipping">🚚 جاري الشحن والتوصيل</option>
+                            <option value="completed">✅ مكتمل ومسلم</option>
+                            <option value="cancelled">🔴 ملغي</option>
+                          </select>
+
+                          <a
+                            href={`https://wa.me/967${ord.customerPhone}?text=${encodeURIComponent(
+                              `مرحباً ${ord.customerName}، بخصوص طلبك رقم #${ord.id} بـ ${ord.paymentMethodName} (السند: ${ord.transactionRef})...`
+                            )}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-3 py-1.5 bg-[#25D366] hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center gap-1 transition-colors"
+                          >
+                            <span>واتساب العميل</span>
+                          </a>
+
+                          <button
+                            onClick={() => {
+                              if (confirm(`هل أنت متأكد من حذف الطلب #${ord.id}؟`)) {
+                                deleteOrder(ord.id);
+                              }
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-white/5"
+                            title="حذف الطلب"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Transaction Details & Items Summary */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-1">
+                          <span className="font-bold text-cyan-300 block">تفاصيل التحويل المالي:</span>
+                          <p className="text-slate-300">
+                            رقم عملية التحويل / الإشعار: <span className="text-amber-400 font-mono font-bold">{ord.transactionRef}</span>
+                          </p>
+                          <p className="text-slate-300">
+                            المبلغ المحول: <span className="text-emerald-400 font-mono font-black">{ord.totalPriceYer.toLocaleString('ar-EG')} ر.ي (${ord.totalPriceUsd})</span>
+                          </p>
+                          <p className="text-slate-400 text-[11px]">
+                            حساب المستلم الموحد: <span className="font-mono text-slate-200">{ord.accountNumber || '785502919'}</span>
+                          </p>
+                        </div>
+
+                        <div className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-1">
+                          <span className="font-bold text-cyan-300 block">المنتجات المطلوبة ({ord.items.length}):</span>
+                          <div className="space-y-1 max-h-24 overflow-y-auto">
+                            {ord.items.map((item, idx) => (
+                              <div key={idx} className="flex items-center justify-between text-[11px] text-slate-200">
+                                <span>• {item.nameAr} ({item.quantity}×)</span>
+                                <span className="font-mono font-bold text-slate-300">
+                                  {(item.priceYer * item.quantity).toLocaleString('ar-EG')} ر.ي
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -893,6 +1057,84 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ onExit }) => {
           {/* TAB 6: SETTINGS & SECURITY */}
           {activeTab === 'settings' && (
             <div className="space-y-6 max-w-2xl">
+              {/* Database Maintenance Mode Control Card */}
+              <form onSubmit={handleSaveMaintenance} className="p-5 rounded-3xl bg-[#0e1d45] border border-amber-500/40 space-y-4 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 shrink-0">
+                      <Wrench className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-white">
+                        وضع الصيانة والتحديث الدوري للمتجر
+                      </h3>
+                      <p className="text-[11px] text-amber-300 font-semibold">
+                        Database & System Maintenance Mode
+                      </p>
+                    </div>
+                  </div>
+
+                  <label className="flex items-center gap-2.5 cursor-pointer bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-2xl border border-white/10 transition-all self-start sm:self-auto">
+                    <span className="text-xs font-bold text-slate-200">
+                      {maintActive ? '🔴 وضع الصيانة مُفعل' : '🟢 المتجر يشتغل طبيعياً'}
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={maintActive}
+                      onChange={(e) => setMaintActive(e.target.checked)}
+                      className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                    />
+                  </label>
+                </div>
+
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  عند تفعيل خيار الصيانة، يظهر المتجر بحالة توقف مؤقت لجميع المستخدمين والزوار مع عرض الرسالة المخصصة أدناه لتحديث قواعد البيانات والنظام، بينما يمكنك كمالك الدخول والتعديل في أي وقت.
+                </p>
+
+                {maintSuccess && (
+                  <div className="p-3 bg-amber-500/20 border border-amber-400 text-amber-300 rounded-xl text-xs flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>تم تطبيق وتحديث حالة وضع الصيانة بنجاح!</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-200 mb-1">
+                    عنوان رسالة الصيانة الرئيسي
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={maintTitle}
+                    onChange={(e) => setMaintTitle(e.target.value)}
+                    placeholder="المتجر تحت الصيانة والتحديث الدوري"
+                    className="w-full bg-[#050e26] border border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-200 mb-1">
+                    تفاصيل ورسالة الصيانة للمستخدمين
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={maintMsg}
+                    onChange={(e) => setMaintMsg(e.target.value)}
+                    placeholder="اكتب رسالة توضيحية لزوار المتجر..."
+                    className="w-full bg-[#050e26] border border-slate-700 rounded-xl p-3 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-slate-950 font-black rounded-xl text-xs shadow-md flex items-center gap-2 transition-all"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>حفظ وتحديث وضع الصيانة</span>
+                </button>
+              </form>
+
               <form onSubmit={handleSaveCredentials} className="p-5 rounded-3xl bg-[#0e1d45] border border-blue-500/20 space-y-4">
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-emerald-400" />

@@ -1,0 +1,32 @@
+{
+  "id": "/",
+  "name": "تطبيقات رقيب برو - Rqeeb Pro Apps",
+  "short_name": "رقيب برو",
+  "description": "متجر تطبيقات رقيب برو الرسمي لتنزيل أفضل تطبيقات وأدوات الأندرويد بسرعات فائقة وأمان تام.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#021333",
+  "background_color": "#0a1128",
+  "icons": [
+    {
+      "src": "/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

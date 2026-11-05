@@ -43,7 +43,18 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
   const t = TRANSLATIONS[lang];
 
   const handleStartDownload = () => {
-    if (downloadDone) return;
+    if (app.isWebLink && app.downloadUrl) {
+      window.open(app.downloadUrl, '_blank');
+      onAddToDownloads(app);
+      setDownloadDone(true);
+      return;
+    }
+
+    if (downloadDone && app.downloadUrl) {
+      window.open(app.downloadUrl, '_blank');
+      return;
+    }
+
     setDownloadProgress(0);
 
     const interval = setInterval(() => {
@@ -53,13 +64,16 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
           clearInterval(interval);
           setDownloadDone(true);
           onAddToDownloads(app);
+          if (app.downloadUrl) {
+            window.open(app.downloadUrl, '_blank');
+          }
           return 100;
         }
         const speeds = ['4.2 MB/s', '5.1 MB/s', '3.9 MB/s', '6.0 MB/s'];
         setDownloadSpeed(speeds[Math.floor(Math.random() * speeds.length)]);
-        return prev + Math.floor(Math.random() * 20) + 10;
+        return prev + Math.floor(Math.random() * 20) + 15;
       });
-    }, 250);
+    }, 200);
   };
 
   const handleShare = () => {
@@ -143,7 +157,7 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
             {downloadProgress !== null && downloadProgress < 100 ? (
               <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 space-y-2">
                 <div className="flex justify-between text-xs font-bold text-blue-900">
-                  <span>جاري تحميل ملف APK... ({downloadProgress}%)</span>
+                  <span>جاري تجهيز حزمة APK والتحميل... ({downloadProgress}%)</span>
                   <span>{downloadSpeed}</span>
                 </div>
                 <div className="w-full h-3 bg-blue-200 rounded-full overflow-hidden">
@@ -161,18 +175,22 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
                   <div>
-                    <h5 className="font-bold text-sm">تم تنزيل الحزمة بنجاح! ({app.size})</h5>
-                    <p className="text-xs text-emerald-700">الملف جاهز للتثبيت المباشر على هاتفك</p>
+                    <h5 className="font-bold text-sm">تم إعداد الرابط المباشر بنجاح! ({app.size})</h5>
+                    <p className="text-xs text-emerald-700">اضغط لفتح رابط التحميل المباشر فوراً</p>
                   </div>
                 </div>
                 <button
                   onClick={() => {
-                    alert(`جاري تشغيل مثبت الحزم لتطبيق ${app.nameAr} (${app.version}) على جهاز الأندرويد.`);
+                    if (app.downloadUrl) {
+                      window.open(app.downloadUrl, '_blank');
+                    } else {
+                      alert(`جاري تشغيل مثبت الحزم لتطبيق ${app.nameAr} على جهاز الأندرويد.`);
+                    }
                   }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition-all shrink-0 flex items-center gap-1.5"
+                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition-all shrink-0 flex items-center gap-1.5"
                 >
                   <Smartphone className="w-4 h-4" />
-                  <span>{t.openFile}</span>
+                  <span>{app.isWebLink ? 'فتح المنصة أونلاين 🌐' : 'تنزيل APK المباشر 📥'}</span>
                 </button>
               </div>
             ) : (
@@ -182,7 +200,7 @@ export const AppDetailModal: React.FC<AppDetailModalProps> = ({
               >
                 <Download className="w-5 h-5" />
                 <span className="text-base font-bold">
-                  {t.downloadApk} ({app.size})
+                  {app.isWebLink ? `فتح المنصة أونلاين (${app.size})` : `${t.downloadApk} (${app.size})`}
                 </span>
               </button>
             )}

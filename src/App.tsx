@@ -10,6 +10,8 @@ import {
   X,
   ShieldCheck,
   KeyRound,
+  Download,
+  Truck,
 } from 'lucide-react';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { Navbar } from './components/Navbar';
@@ -25,6 +27,10 @@ import { SearchModal } from './components/SearchModal';
 import { DownloadsDrawer } from './components/DownloadsDrawer';
 import { OwnerAuthModal } from './components/OwnerAuthModal';
 import { OwnerDashboard } from './components/OwnerDashboard';
+import { InstallStoreModal } from './components/InstallStoreModal';
+import { MaintenanceScreen } from './components/MaintenanceScreen';
+import { CartCheckoutModal } from './components/CartCheckoutModal';
+import { OrderTrackerModal } from './components/OrderTrackerModal';
 import { AndroidApp, TRANSLATIONS } from './data/appsData';
 
 function StoreMain() {
@@ -32,6 +38,7 @@ function StoreMain() {
     apps,
     settings,
     downloadedApps,
+    cartItems,
     addToDownloads,
     removeFromDownloads,
     isOwnerLoggedIn,
@@ -45,7 +52,13 @@ function StoreMain() {
   // Modals state
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCartCheckoutOpen, setIsCartCheckoutOpen] = useState(false);
+  const [isOrderTrackerOpen, setIsOrderTrackerOpen] = useState(false);
   const [isCustomAppOpen, setIsCustomAppOpen] = useState(false);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+
+  // PWA Deferred Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   // Owner Auth & Dashboard state
   const [isOwnerAuthOpen, setIsOwnerAuthOpen] = useState(false);
@@ -56,11 +69,30 @@ function StoreMain() {
 
   const t = TRANSLATIONS[lang];
 
-  // Update HTML dir and lang
+  // Update HTML dir and lang & Listen for PWA prompt
   useEffect(() => {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, [lang]);
+
+  const handleNativeInstall = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult: any) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted PWA install');
+        }
+        setDeferredPrompt(null);
+      });
+    }
+  };
 
   const handleCategorySelect = (cat: string) => {
     setSelectedCategory(cat);
@@ -84,6 +116,32 @@ function StoreMain() {
       setIsOwnerAuthOpen(true);
     }
   };
+
+  if (settings.maintenanceModeActive && !isOwnerDashboardOpen) {
+    return (
+      <>
+        <MaintenanceScreen
+          onTriggerOwnerAuth={handleTriggerOwnerAuth}
+          onOpenOwnerDashboard={() => setIsOwnerDashboardOpen(true)}
+        />
+
+        {/* Owner Verification / Login Modal */}
+        <OwnerAuthModal
+          isOpen={isOwnerAuthOpen}
+          onClose={() => setIsOwnerAuthOpen(false)}
+          onSuccess={() => {
+            setIsOwnerAuthOpen(false);
+            setIsOwnerDashboardOpen(true);
+          }}
+        />
+
+        {/* Comprehensive Owner Dashboard Fullscreen Overlay */}
+        {isOwnerDashboardOpen && (
+          <OwnerDashboard onExit={() => setIsOwnerDashboardOpen(false)} />
+        )}
+      </>
+    );
+  }
 
   return (
     <div
@@ -118,18 +176,20 @@ function StoreMain() {
         <div className="absolute -bottom-40 left-0 w-[600px] h-[600px] bg-sky-200/20 rounded-full blur-3xl" />
       </div>
 
-      {/* 1. Curved Dark Blue Navbar (Exact Match to Header in Image) */}
+      {/* 1. Curved Dark Blue Navbar */}
       <Navbar
         lang={lang}
         setLang={setLang}
         activeNav={activeNav}
         setActiveNav={setActiveNav}
         onOpenSearch={() => setIsSearchOpen(true)}
-        onOpenCart={() => setIsCartOpen(true)}
+        onOpenCart={() => setIsCartCheckoutOpen(true)}
+        onOpenOrderTracker={() => setIsOrderTrackerOpen(true)}
         onOpenCustomAppModal={() => setIsCustomAppOpen(true)}
+        onOpenInstallModal={() => setIsInstallModalOpen(true)}
         onTriggerOwnerAuth={handleTriggerOwnerAuth}
         onOpenOwnerDashboard={() => setIsOwnerDashboardOpen(true)}
-        cartCount={downloadedApps.length}
+        cartCount={cartItems.length + downloadedApps.length}
       />
 
       {/* Main Content Area */}
@@ -191,11 +251,19 @@ function StoreMain() {
               {/* Action Buttons & Secret Owner Indicator */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <button
+                  onClick={() => setIsInstallModalOpen(true)}
+                  className="px-6 py-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white rounded-2xl font-black text-sm shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 hover:scale-[1.02] border border-emerald-300/30"
+                >
+                  <Download className="w-4 h-4 animate-bounce" />
+                  <span>تحميل المتجر على الهاتف 📲</span>
+                </button>
+
+                <button
                   onClick={() => {
                     const el = document.getElementById('store-section');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 hover:from-blue-700 hover:to-indigo-900 text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 hover:scale-[1.02]"
+                  className="px-5 py-3 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 hover:from-blue-700 hover:to-indigo-900 text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 hover:scale-[1.02]"
                 >
                   <Layers className="w-4 h-4" />
                   <span>{t.switchModeCatalog}</span>
@@ -207,6 +275,14 @@ function StoreMain() {
                 >
                   <Sparkles className="w-4 h-4 text-cyan-600" />
                   <span>{t.navCustom}</span>
+                </button>
+
+                <button
+                  onClick={() => setIsOrderTrackerOpen(true)}
+                  className="px-5 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-2xl font-bold text-sm shadow-md transition-all flex items-center gap-2 hover:scale-[1.02] border border-cyan-400/30"
+                >
+                  <Truck className="w-4 h-4 text-cyan-200" />
+                  <span>تتبع طلبك والتحويلات 🚚</span>
                 </button>
 
                 <button
@@ -229,8 +305,8 @@ function StoreMain() {
             </div>
 
             {/* RIGHT COLUMN: 3D Smartphone Frame + Side Display Cards */}
-            <div className="lg:col-span-5 xl:col-span-5 flex items-center justify-center relative">
-              <div className="relative flex items-center justify-center gap-4">
+            <div className="lg:col-span-5 xl:col-span-5 flex items-center justify-center relative w-full">
+              <div className="relative flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 w-full">
                 {/* 1. Interactive 3D Smartphone Mockup */}
                 <PhoneMockup
                   lang={lang}
@@ -253,13 +329,14 @@ function StoreMain() {
           </div>
         </div>
 
-        {/* FULL APP STORE SECTION (Scrollable Catalog with filters, search, and direct APK download) */}
+        {/* FULL APP & PRODUCT STORE CATALOG */}
         <StoreCatalog
           lang={lang}
           onSelectApp={(app) => setSelectedApp(app)}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
           downloadedAppIds={downloadedApps.map((a) => a.id)}
+          onOpenCartModal={() => setIsCartCheckoutOpen(true)}
         />
       </main>
 
@@ -297,7 +374,7 @@ function StoreMain() {
         lang={lang}
       />
 
-      {/* 5. Owner Verification / Login Modal (Triggered by 20s Hold on Logo) */}
+      {/* 5. Owner Verification / Login Modal */}
       <OwnerAuthModal
         isOpen={isOwnerAuthOpen}
         onClose={() => setIsOwnerAuthOpen(false)}
@@ -307,7 +384,31 @@ function StoreMain() {
         }}
       />
 
-      {/* 6. Comprehensive Owner Dashboard Fullscreen Overlay */}
+      {/* 6. Install / Download Store App Modal (PWA & APK) */}
+      <InstallStoreModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+        lang={lang}
+        deferredPrompt={deferredPrompt}
+        onNativeInstall={handleNativeInstall}
+      />
+
+      {/* 7. Shopping Cart & E-Wallets Checkout Modal */}
+      <CartCheckoutModal
+        isOpen={isCartCheckoutOpen}
+        onClose={() => setIsCartCheckoutOpen(false)}
+        lang={lang}
+        onOpenOrderTracker={() => setIsOrderTrackerOpen(true)}
+      />
+
+      {/* 8. Order Status Tracking Modal */}
+      <OrderTrackerModal
+        isOpen={isOrderTrackerOpen}
+        onClose={() => setIsOrderTrackerOpen(false)}
+        lang={lang}
+      />
+
+      {/* 9. Comprehensive Owner Dashboard Fullscreen Overlay */}
       {isOwnerDashboardOpen && (
         <OwnerDashboard onExit={() => setIsOwnerDashboardOpen(false)} />
       )}

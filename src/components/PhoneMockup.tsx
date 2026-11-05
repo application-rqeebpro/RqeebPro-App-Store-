@@ -33,20 +33,20 @@ export const PhoneMockup: React.FC<PhoneMockupProps> = ({
   const [selectedPhoneCat, setSelectedPhoneCat] = useState<'all' | 'games' | 'education' | 'utility'>('all');
   const t = TRANSLATIONS[lang];
 
-  // Specific 4 apps for "أحدث التطبيقات" as seen in the uploaded image or latest dynamic
+  // 4 main official apps for "أحدث التطبيقات"
   const latestApps = [
-    apps.find((a) => a.id === 'rqeeb-pro') || apps[0],
-    apps.find((a) => a.id === 'math-solver') || apps[1],
-    apps.find((a) => a.id === 'flash-player') || apps[2],
-    apps.find((a) => a.id === 'quran-app') || apps[3],
+    apps.find((a) => a.id === 'rqeeb-pro-phones') || apps[0],
+    apps.find((a) => a.id === 'teacher-smart') || apps[1],
+    apps.find((a) => a.id === 'rqeeb-3secondary') || apps[2],
+    apps.find((a) => a.id === 'mechatronics-academy') || apps[3],
   ].filter(Boolean);
 
-  // 4 apps for "الأكثر تحميلاً" as seen in the uploaded image
+  // 4 official apps for "الأكثر تحميلاً"
   const mostDownloadedApps = [
-    apps.find((a) => a.id === 'safe-vpn') || apps[4] || apps[0],
-    apps.find((a) => a.id === 'block-puzzle') || apps[5] || apps[1],
-    apps.find((a) => a.id === 'video-editor-pro') || apps[6] || apps[2],
-    apps.find((a) => a.id === 'speed-cleaner') || apps[7] || apps[3],
+    apps.find((a) => a.id === 'mechatronics-lab') || apps[4] || apps[0],
+    apps.find((a) => a.id === 'rqeeb-pro-phones') || apps[0],
+    apps.find((a) => a.id === 'teacher-smart') || apps[1],
+    apps.find((a) => a.id === 'rqeeb-3secondary') || apps[2],
   ].filter(Boolean);
 
   // Filtered apps if user searches inside phone
