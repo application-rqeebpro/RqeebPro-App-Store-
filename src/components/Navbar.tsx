@@ -30,6 +30,7 @@ interface NavbarProps {
   onOpenCart: () => void;
   onOpenOrderTracker: () => void;
   onOpenCustomAppModal: () => void;
+  onOpenProgrammingServicesModal: () => void;
   onOpenInstallModal: () => void;
   onTriggerOwnerAuth: () => void;
   onOpenOwnerDashboard: () => void;
@@ -45,6 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCart,
   onOpenOrderTracker,
   onOpenCustomAppModal,
+  onOpenProgrammingServicesModal,
   onOpenInstallModal,
   onTriggerOwnerAuth,
   onOpenOwnerDashboard,
@@ -56,16 +58,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const navItems = [
     { id: 'home', label: t.navHome, icon: Home },
+    { id: 'programming', label: 'خدمات البرمجة', icon: Sparkles, isSpecial: true },
     { id: 'apps', label: t.navApps, icon: Layers },
     { id: 'games', label: t.navGames, icon: Gamepad2 },
     { id: 'edu', label: t.navEdu, icon: GraduationCap },
     { id: 'utils', label: t.navUtils, icon: Briefcase },
-    { id: 'custom', label: t.navCustom, icon: Sparkles, isSpecial: true },
+    { id: 'custom', label: t.navCustom, icon: Sparkles },
     { id: 'contact', label: t.navContact, icon: Phone },
   ];
 
   const handleNavClick = (id: string) => {
-    if (id === 'custom') {
+    if (id === 'programming') {
+      onOpenProgrammingServicesModal();
+    } else if (id === 'custom') {
       onOpenCustomAppModal();
     } else if (id === 'contact') {
       const el = document.getElementById('contact-section');
@@ -320,6 +325,18 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Bottom Actions Area */}
             <div className="pt-4 border-t border-white/10 space-y-2.5">
+              {/* Programming Services Request Button */}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenProgrammingServicesModal();
+                }}
+                className="w-full py-2.5 px-3 bg-gradient-to-r from-blue-700 via-indigo-700 to-cyan-600 hover:from-blue-800 hover:to-cyan-700 text-white rounded-2xl text-xs font-black shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 transition-all border border-cyan-300/40"
+              >
+                <Sparkles className="w-4 h-4 text-cyan-200 animate-pulse" />
+                <span>خدمات البرمجة واستعادة الحسابات 💻</span>
+              </button>
+
               {/* Download Store App Button */}
               <button
                 onClick={() => {

@@ -31,6 +31,7 @@ import { InstallStoreModal } from './components/InstallStoreModal';
 import { MaintenanceScreen } from './components/MaintenanceScreen';
 import { CartCheckoutModal } from './components/CartCheckoutModal';
 import { OrderTrackerModal } from './components/OrderTrackerModal';
+import { ProgrammingServicesModal } from './components/ProgrammingServicesModal';
 import { AndroidApp, TRANSLATIONS } from './data/appsData';
 
 function StoreMain() {
@@ -54,6 +55,7 @@ function StoreMain() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCartCheckoutOpen, setIsCartCheckoutOpen] = useState(false);
   const [isOrderTrackerOpen, setIsOrderTrackerOpen] = useState(false);
+  const [isProgrammingServicesOpen, setIsProgrammingServicesOpen] = useState(false);
   const [isCustomAppOpen, setIsCustomAppOpen] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
 
@@ -186,6 +188,7 @@ function StoreMain() {
         onOpenCart={() => setIsCartCheckoutOpen(true)}
         onOpenOrderTracker={() => setIsOrderTrackerOpen(true)}
         onOpenCustomAppModal={() => setIsCustomAppOpen(true)}
+        onOpenProgrammingServicesModal={() => setIsProgrammingServicesOpen(true)}
         onOpenInstallModal={() => setIsInstallModalOpen(true)}
         onTriggerOwnerAuth={handleTriggerOwnerAuth}
         onOpenOwnerDashboard={() => setIsOwnerDashboardOpen(true)}
@@ -267,6 +270,14 @@ function StoreMain() {
                 >
                   <Layers className="w-4 h-4" />
                   <span>{t.switchModeCatalog}</span>
+                </button>
+
+                <button
+                  onClick={() => setIsProgrammingServicesOpen(true)}
+                  className="px-5 py-3 bg-gradient-to-r from-blue-700 via-indigo-700 to-cyan-600 hover:from-blue-800 hover:to-cyan-700 text-white rounded-2xl font-black text-sm shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 hover:scale-[1.02] border border-cyan-400/40"
+                >
+                  <Sparkles className="w-4 h-4 text-cyan-200 animate-pulse" />
+                  <span>خدمات البرمجة واستعادة الحسابات 💻</span>
                 </button>
 
                 <button
@@ -408,7 +419,14 @@ function StoreMain() {
         lang={lang}
       />
 
-      {/* 9. Comprehensive Owner Dashboard Fullscreen Overlay */}
+      {/* 9. Programming Services Request Modal */}
+      <ProgrammingServicesModal
+        isOpen={isProgrammingServicesOpen}
+        onClose={() => setIsProgrammingServicesOpen(false)}
+        lang={lang}
+      />
+
+      {/* 10. Comprehensive Owner Dashboard Fullscreen Overlay */}
       {isOwnerDashboardOpen && (
         <OwnerDashboard onExit={() => setIsOwnerDashboardOpen(false)} />
       )}
